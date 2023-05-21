@@ -1,12 +1,43 @@
 const {app, BrowserWindow} = require('electron')
 const path = require('path')
 const url = require('url')
+const koffi = require('koffi')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
 
 function createWindow () {
+  const vulkan = koffi.load('libvulkan.so.1')
+  const VkInstanceCreateInfo = koffi.struct('VkInstanceCreateInfo', {
+    sType: 'int',
+    pNext: 'void*',
+    flags: 'uint32_t',
+    pApplicationInfo: 'void*',
+    enabledLayerCount: 'uint32_t',
+    ppEnabledLayerNames: 'char*',
+    enabledExtensionCount: 'uint32_t',
+    ppEnabledExtensionNames: 'char*'
+  })
+  const VkInstance = koffi.pointer('VkInstance', koffi.opaque(), 1)
+  const vkCreateInstance = vulkan.func('int vkCreateInstance(VkInstanceCreateInfo*, void*, _Out_ VkInstance*)')
+  const instance_handle = [0]
+  const result = vkCreateInstance({
+    sType: 1,
+    pNext: null,
+    flags: 0,
+    pApplicationInfo: null,
+    enabledLayerCount: 0,
+    ppEnabledLayerNames: null,
+    enabledExtensionCount: 0,
+    ppEnabledExtensionNames: null
+  }, null, instance_handle)
+  if (result === 0) {
+    console.log('Successfully created Vulkan instance!', instance_handle[0])
+  } else {
+    console.warn('Failed to create Vulkan instance with error code', result)
+  }
+
   // Create the browser window.
   win = new BrowserWindow({width: 1000, height: 700})
 
